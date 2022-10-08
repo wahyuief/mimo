@@ -1,8 +1,8 @@
 <?php
+require 'vendor/autoload.php';
+
 use Mimo\Core;
 use Workerman\Protocols\Http\Response;
-
-require 'vendor/autoload.php';
 
 $api = new Core('http://0.0.0.0:3000');
 
