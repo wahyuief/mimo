@@ -158,10 +158,6 @@ class Core extends Worker
             $method = $request->method();
             $key = $method . $path;
             $callback = $callbacks[$key] ?? null;
-            if ($callback) {
-                $connection->send($callback($request));
-                return null;
-            }
 
             $ret = $this->dispatcher->dispatch($method, $path);
             if ($ret[0] === Dispatcher::FOUND) {
@@ -173,13 +169,15 @@ class Core extends Worker
                     };
                 }
                 $callbacks[$key] = $callback;
-                $connection->send($callback($request));
+                $connection->send(new Response(200, ['Content-Type' => 'application/json'], json_encode(['status' => 'success', 'data' => $callback($request)])));
                 return true;
+            } elseif ($ret[0] === Dispatcher::METHOD_NOT_ALLOWED) {
+                $connection->send(new Response(405, ['Content-Type' => 'application/json'], json_encode(['status' => 'fail', 'message' => 'method not allowed'])));
             } else {
-                $connection->send(new Response(404, [], '<h1>404 Not Found</h1>'));
+                $connection->send(new Response(404, ['Content-Type' => 'application/json'], json_encode(['status' => 'fail', 'message' => 'endpoint not found'])));
             }
         } catch (\Throwable $e) {
-            $connection->send(new Response(500, [], (string)$e));
+            $connection->send(new Response(500, ['Content-Type' => 'application/json'], json_encode(['status' => 'error', 'message' => (string)$e])));
         }
     }
 }
