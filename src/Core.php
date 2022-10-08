@@ -169,8 +169,7 @@ class Core extends Worker
                     };
                 }
                 $callbacks[$key] = $callback;
-                $connection->send(new Response(200, ['Content-Type' => 'application/json'], json_encode(['status' => 'success', 'data' => $callback($request)])));
-                return true;
+                $connection->send($callback($request));
             } elseif ($ret[0] === Dispatcher::METHOD_NOT_ALLOWED) {
                 $connection->send(new Response(405, ['Content-Type' => 'application/json'], json_encode(['status' => 'fail', 'message' => 'method not allowed'])));
             } else {
