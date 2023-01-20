@@ -30,7 +30,7 @@ class Core extends Worker
     public function __construct($socket_name = '', array $context_option = array())
     {
         parent::__construct($socket_name, $context_option);
-        $this->onMessage = [$this, 'onMessage'];
+        $this->onMessage = $this->onMessage(...);
     }
 
     /**
@@ -158,6 +158,10 @@ class Core extends Worker
             $method = $request->method();
             $key = $method . $path;
             $callback = $callbacks[$key] ?? null;
+            if ($callback) {
+                $connection->send($callback($request));
+                return null;
+            }
 
             $ret = $this->dispatcher->dispatch($method, $path);
             if ($ret[0] === Dispatcher::FOUND) {
@@ -170,6 +174,7 @@ class Core extends Worker
                 }
                 $callbacks[$key] = $callback;
                 $connection->send($callback($request));
+                return true;
             } elseif ($ret[0] === Dispatcher::METHOD_NOT_ALLOWED) {
                 $connection->send(new Response(405, ['Content-Type' => 'application/json'], json_encode(['status' => 'fail', 'message' => 'method not allowed'])));
             } else {
